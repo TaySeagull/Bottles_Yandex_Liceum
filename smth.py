@@ -1,13 +1,20 @@
+# примечание от разработчика:
+# это файл для экспериментов и идей, не судите строго
 import pygame
 import itertools
 import sys
 import os
 
+pygame.init()
+size = 860, 600
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption("Легкий уровень")
+
 
 def load_image(name, color_key=None):
-    fullname = os.path.join('data', name)
+    thename = f"data/{name}"
     try:
-        image = pygame.image.load(fullname)
+        image = pygame.image.load(thename)
     except pygame.error as message:
         print('Не удаётся загрузить:', name)
         raise SystemExit(message)
@@ -20,8 +27,7 @@ def load_image(name, color_key=None):
 
 
 tile_images = {
-    'wall': load_image('box.png'),
-    'empty': load_image('grass.png')
+    'bottle': load_image("bottle.PNG")
 }
 
 
@@ -45,15 +51,42 @@ class Sprite(pygame.sprite.Sprite):
         pass
 
 
-tile_width = tile_height = 50
+tile_width = tile_height = 45
 
 
-class Tile(pygame.sprite.Sprite):
+class Tile(Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
+        super().__init__(sprite_group)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+
+
+def load_level(name: str) -> list:
+    """
+    param name: name of the file of the level's map
+    return: list consisting of stings of the level
+    Is used to read txt-files of the level and convert it into a list
+    """
+    filename = "data/" + name
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    return level_map
+
+
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tile('empty', x, y)
+            elif level[y][x] == '#':
+                Tile('wall', x, y)
+            elif level[y][x] == '@':
+                Tile('empty', x, y)
+                new_player = Player(x, y)
+                level[y][x] = "."
+    return new_player, x, y
 
 
 class Board:
@@ -61,9 +94,9 @@ class Board:
         self.width = width
         self.height = height
         self.board = [[0] * width for _ in range(height)]
-        self.left = 10
-        self.top = 20
-        self.cell_size = 60
+        self.left = 40
+        self.top = 5
+        self.cell_size = 45
 
     def render(self, screen):
         colors = [pygame.Color("black"), pygame.Color("red"), pygame.Color("blue")]
@@ -99,11 +132,11 @@ class Board:
 
 def main():
     pygame.init()
-    size = 860, 600
+    size = 800, 600
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("Легкий уровень")
 
-    board = Board(14, 9)
+    board = Board(16, 13)
     running = True
     while running:
         for event in pygame.event.get():

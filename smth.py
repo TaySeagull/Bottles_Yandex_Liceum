@@ -5,8 +5,10 @@ import itertools
 import sys
 import os
 
+FPS = 50
 pygame.init()
 size = 860, 600
+clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Легкий уровень")
 
@@ -27,7 +29,14 @@ def load_image(name, color_key=None):
 
 
 tile_images = {
-    'bottle': load_image("bottle.PNG")
+    'bottle': load_image("bottle.PNG"),
+    'black': load_image("black_tile.jpg"),
+    'clear': load_image("clear_tile.jpg"),
+    'yellow': load_image("yellow_tile.jpg"),
+    'blue': load_image("blue_tile.jpg"),
+    'orange': load_image("orange_tile.jpg"),
+    'green': load_image("green_tile.jpg"),
+    'pink': load_image("pink_tile.jpg")
 }
 
 
@@ -52,6 +61,17 @@ class Sprite(pygame.sprite.Sprite):
 
 
 tile_width = tile_height = 45
+sprite_group = SpriteGroup()
+
+
+class SpriteGroup(pygame.sprite.Group):
+
+    def __init__(self):
+        super().__init__()
+
+    def get_event(self, event):
+        for sprite in self:
+            sprite.get_event(event)
 
 
 class Tile(Sprite):
@@ -64,29 +84,38 @@ class Tile(Sprite):
 
 def load_level(name: str) -> list:
     """
-    param name: name of the file of the level's map
-    return: list consisting of stings of the level
+    :param name: name of the file of the level's map
+    :return: list consisting of stings of the level
     Is used to read txt-files of the level and convert it into a list
     """
     filename = "data/" + name
     with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
+        level_map = [list(line.strip()) for line in mapFile]
     return level_map
 
 
 def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
+    x, y = None, None
+    for y in range(13):
+        for x in range(16):
             if level[y][x] == '.':
-                Tile('empty', x, y)
-            elif level[y][x] == '#':
-                Tile('wall', x, y)
-            elif level[y][x] == '@':
-                Tile('empty', x, y)
-                new_player = Player(x, y)
-                level[y][x] = "."
-    return new_player, x, y
+                Tile('black', x, y)
+            elif level[y][x] == 'c':
+                Tile('clear', x, y)
+            elif level[y][x] == 'y':
+                Tile('yellow', x, y)
+            elif level[y][x] == 'b':
+                Tile('blue', x, y)
+            elif level[y][x] == 'o':
+                Tile('orange', x, y)
+            elif level[y][x] == 'g':
+                Tile('green', x, y)
+            elif level[y][x] == 'p':
+                Tile('pink', x, y)
+    return x, y
+
+
+level_x, level_y = generate_level(load_level('level_1.txt'))
 
 
 class Board:
@@ -145,9 +174,9 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
-
-        screen.fill((0, 0, 0))
-        board.render(screen)
+        screen.fill(pygame.Color("black"))
+        sprite_group.draw(screen)
+        clock.tick(FPS)
         pygame.display.flip()
     pygame.quit()
 

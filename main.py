@@ -45,6 +45,14 @@ tile_images = {
     'pink': load_image("pink_tile.jpg")
 }
 
+bottles_dict_1 = {"bottle_1": [(2, 4), (2, 5), (2, 6), (2, 7), (2, 8)],
+                "bottle_2": [(5, 4), (5, 5), (5, 6), (5, 7), (5, 8)],
+                "bottle_3": [(8, 4), (8, 5), (8, 6), (8, 7), (8, 8)]}
+
+colors_dict_1 = {"bottle_1": ["clear", "yellow", "blue", "yellow", "blue"],
+                "bottle_2": ["clear", "blue", "yellow", "blue", "yellow"],
+                "bottle_3": ["clear", "clear", "clear", "clear", "clear"]}
+
 
 class SpriteGroup(pygame.sprite.Group):
     def __init__(self):
@@ -109,6 +117,12 @@ class Tile(Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        self.pos = (pos_x, pos_y)
+
+    def move(self, x, y):
+        self.pos = (x, y)
+        self.rect = self.image.get_rect().move(
+            tile_width * self.pos[0] + 15, tile_height * self.pos[1] + 5)
 
 
 class Board:
@@ -145,8 +159,7 @@ class Board:
         self.cell_size = cell_size
 
     def on_click(self, cell):
-        print(cell)
-        self.board[cell[1]][cell[0]] = (self.board[cell[1]][cell[0]] + 1) % 3
+        pass
 
     def get_cell(self, mouse_pos):
         """
@@ -160,14 +173,27 @@ class Board:
             return None
         return cell_x, cell_y
 
-    def get_click(self, mouse_pos) -> None:
+    def get_click(self, mouse_pos):
         """
         param mouse_pos: the position of the mouse
         return: None
         """
         cell = self.get_cell(mouse_pos)
         if cell:
-            self.on_click(cell)
+            return cell
+
+
+def check_in_bottle(pos: tuple, level_num: int) -> bool:
+    if level_num == 1:
+        for lis in bottles_dict_1.values():
+            if pos in lis:
+                return True
+        return False
+    #else:
+    #    for lis in bottles_dict_2.values():
+    #        if pos in lis:
+    #            return True
+    #    return False
 
 
 def load_level(name: str) -> list:
@@ -189,7 +215,7 @@ def generate_level(level: list):
     """
     x, y = None, None
     for y in range(13):
-        for x in range(16):
+        for x in range(13):
             if level[y][x] == '.':
                 Tile('black', x, y)
             elif level[y][x] == 'c':
@@ -225,7 +251,7 @@ def main():
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("Легкий уровень")
 
-    board = Board(16, 13)
+    board = Board(13, 13)
     running = True
     while running:
         for event in pygame.event.get():
@@ -233,7 +259,14 @@ def main():
                 running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                board.get_click(event.pos)
+                pos = board.get_click(event.pos)
+                if check_in_bottle(pos, 1):
+                    print(pos)
+                    if pos[0] == 2:
+                        current_water_pos = bottles_dict_1["bottle_1"].pop(1)
+                        current_color = colors_dict_1["bottle_1"].pop(1)
+                        Tile("clear", pos[0], pos[1])
+                        Tile(current_color, pos[0], 3)
         screen.fill(pygame.Color("black"))
         sprite_group.draw(screen)
         clock.tick(FPS)
